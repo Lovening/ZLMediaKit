@@ -33,6 +33,8 @@ class ProtocolOption;
 // Returns true if the configuration file is loaded successfully, otherwise returns false.
 bool loadIniConfig(const char *ini_path = nullptr);
 
+extern const std::string kStartupRtspPrefix;
+
 // //////////广播名称///////////  [AUTO-TRANSLATED:439b2d74]
 // //////////Broadcast Name///////////
 namespace Broadcast {

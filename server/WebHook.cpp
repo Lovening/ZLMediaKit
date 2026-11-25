@@ -372,6 +372,30 @@ ArgsType getRecordInfo(const RecordInfo &info) {
     return body;
 }
 
+static map<string, string> loadConfiguredRtspProxies() {
+    map<string, string> sources;
+    const auto &prefix = kStartupRtspPrefix;
+    const auto &config = mINI::Instance();
+    for (auto it = config.lower_bound(prefix); it != config.end() && start_with(it->first, prefix); ++it) {
+        auto name = it->first.substr(prefix.size());
+        const string url = it->second;
+        if (url.empty()) {
+            continue;
+        }
+        auto slash = name.find('/');
+        if (slash == string::npos || slash == 0 || slash == name.size() - 1 ||
+            name.find_first_of("?#") != string::npos || name.find('/', slash + 1) != string::npos ||
+            (!start_with(url, "rtsp://") && !start_with(url, "rtsps://"))) {
+            WarnL << "Invalid startup RTSP proxy entry: " << name;
+            continue;
+        }
+
+        MediaTuple tuple { DEFAULT_VHOST, name.substr(0, slash), name.substr(slash + 1), "" };
+        sources.emplace(tuple.shortUrl(), url);
+    }
+    return sources;
+}
+
 void installWebHook() {
     GET_CONFIG(bool, hook_enable, Hook::kEnable);
 
@@ -577,7 +601,32 @@ void installWebHook() {
 
     // 监听播放失败(未找到特定的流)事件  [AUTO-TRANSLATED:ca8cc9ba]
     // Listen to playback failure (specific stream not found) event
-    NoticeCenter::Instance().addListener(&web_hook_tag, Broadcast::kBroadcastNotFoundStream, [](BroadcastNotFoundStreamArgs) {
+    // 读取配置文件
+    auto configured_sources = loadConfiguredRtspProxies();
+    auto pull_poller = EventPollerPool::Instance().getPoller();
+    //lambel表达式 回调函数
+    // NoticeCenter::Instance().addListener(&web_hook_tag, Broadcast::kBroadcastNotFoundStream, [](BroadcastNotFoundStreamArgs)
+    NoticeCenter::Instance().addListener(&web_hook_tag, Broadcast::kBroadcastNotFoundStream,
+                                        [configured_sources, pull_poller](BroadcastNotFoundStreamArgs) {
+        auto source = configured_sources.find(args.shortUrl());
+        if (source != configured_sources.end()) {
+            auto url = source->second;
+            pull_poller->async([args, url]() {
+                if (MediaSource::find(args)) {
+                    return;
+                }
+                ProtocolOption option;
+                option.enable_rtsp = true;
+                option.auto_close = true;
+                mINI player_args;
+                player_args[Client::kRtpType] = Rtsp::RTP_TCP;
+                // Concurrent playback requests wait for the same media registration.
+                addStreamProxy(args, url, 0, false, option, 0, player_args,
+                               [](const SockException &, const string &) {});
+            }, false);
+            return;
+        }
+
         if (!origin_urls.empty()) {
             // 设置了源站，那么尝试溯源  [AUTO-TRANSLATED:541a4ced]
             // If the source station is set, then try to trace the source

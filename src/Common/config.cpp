@@ -22,6 +22,8 @@ using namespace toolkit;
 
 namespace mediakit {
 
+const string kStartupRtspPrefix = "startup_rtsp.";
+
 bool loadIniConfig(const char *ini_path) {
     string ini;
     if (ini_path && ini_path[0] != '\0') {
@@ -37,7 +39,9 @@ bool loadIniConfig(const char *ini_path) {
         for (auto &pr : tmp) {
             if (ref.find(pr.first) == ref.end()) {
                 // 新增键
-                WarnL << "unknow config: " << pr.first << " = " << pr.second;
+                if (pr.first.compare(0, kStartupRtspPrefix.size(), kStartupRtspPrefix) != 0) {
+                    WarnL << "unknow config: " << pr.first << " = " << pr.second;
+                }
                 ref.emplace(pr);
             } else {
                 // 更新键

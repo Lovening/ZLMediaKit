@@ -202,7 +202,7 @@ void PlayerProxy::play(const string &url) {
             strongSelf->setTranslationInfo();
             strongSelf->_on_connect(strongSelf->_transtalion_info);
 
-            InfoL << "play " << strongSelf->_pull_url << " success";
+            InfoL << "play " << strongSelf->_tuple.shortUrl() << " success";
             strongSelf->_status = std::make_shared<std::string>("playing");
         } else if (*piFailedCnt < strongSelf->_retry_count || strongSelf->_retry_count < 0) {
             // 播放失败，延时重试播放  [AUTO-TRANSLATED:d7537c9c]
@@ -330,7 +330,7 @@ void PlayerProxy::rePlay(int iFailedCnt) {
         if (!strongPlayer) {
             return false;
         }
-        WarnL << "重试播放[" << iFailedCnt << "]:" << strongPlayer->_pull_url;
+        WarnL << "重试播放[" << iFailedCnt << "]:" << strongPlayer->_tuple.shortUrl();
         strongPlayer->MediaPlayer::play(strongPlayer->_pull_url);
         strongPlayer->setDirectProxy();
         return false;

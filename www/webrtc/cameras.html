@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>相机监控</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101519; color: #edf2f3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1460px; margin: auto; padding: clamp(18px, 4vw, 56px); }
+    h1 { margin: 0 0 26px; font-size: clamp(1.6rem, 4vw, 2.5rem); }
+    form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 22px; }
+    input { flex: 1 1 240px; min-width: 0; padding: 8px 10px; border: 1px solid #52636b; border-radius: 7px; font: inherit; background: #192228; color: inherit; }
+    #cameras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 370px), 1fr)); gap: 20px; }
+    article { overflow: hidden; border: 1px solid #33434a; border-radius: 14px; background: #192228; }
+    header, footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+    h2 { margin: 0; font-size: 1rem; }
+    code { color: #a7b8be; overflow-wrap: anywhere; }
+    video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #090d10; object-fit: contain; }
+    output { color: #bacad0; font-size: .9rem; }
+    button { font: inherit; font-weight: 650; color: #09201c; background: #6ee4c5; border: 0; border-radius: 7px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+    button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  </style>
+  <script src="./ZLMRTCClient.js" defer></script>
+  <script defer src="./cameras.js"></script>
+</head>
+<body>
+  <main>
+    <h1>相机监控</h1>
+    <form id="server-settings">
+      <label for="zlm-address">ZLM 服务器地址</label>
+      <input id="zlm-address" type="url" placeholder="http://192.168.1.100" required>
+      <button type="submit">应用地址</button>
+      <output id="server-status" aria-live="polite"></output>
+    </form>
+    <div id="cameras"></div>
+  </main>
+  <template id="camera-card">
+    <article>
+      <header><h2></h2><code></code></header>
+      <video muted autoplay playsinline controls></video>
+      <footer>
+        <output aria-live="polite">未播放</output>
+        <button type="button">播放</button>
+      </footer>
+    </article>
+  </template>
+</body>
+</html>
